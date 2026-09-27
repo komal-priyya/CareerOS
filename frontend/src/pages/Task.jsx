@@ -18,8 +18,13 @@ const response =  await fetch("http://localhost:5000/api/tasks",{
     priority:priority,
   }),
 });
-const data = await response.json();
-console.log(data);
+// const data = await response.json();
+// console.log(data);
+
+const text = await response.text();
+
+console.log("STATUS:", response.status);
+console.log("RESPONSE:", text);
 }
   return(
     <form onSubmit={handleSubmit}>
