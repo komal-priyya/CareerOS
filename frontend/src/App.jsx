@@ -2,7 +2,7 @@ import React from 'react'
 import Applications from './pages/Applications'
 import Dashboard from './pages/Dashboard'
 import Opportunities from './pages/Opportunities'
-import Task from './pages/Task'
+import AddTask from './pages/Task'
 import Today from './pages/Today'
 import Sidebar from './components/Sidebar'
 import {Routes,Route} from 'react-router-dom'
@@ -20,7 +20,7 @@ const App = () => {
     <Route path='/applications' element={Applications}/>
     <Route path='/dashboard' element={Dashboard}/>
    <Route path='/opportunities' element={Opportunities}/>
-    <Route path='/task' element={Task}/>
+    <Route path='/tasks' element={<AddTask/>}/>
      <Route path='/today' element={Today}/>
 
 
@@ -37,3 +37,4 @@ const App = () => {
 }
 
 export default App
+

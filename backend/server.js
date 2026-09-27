@@ -1,23 +1,18 @@
 require("dotenv").config();
+
 const express = require("express");
+const cors = require("cors");
+const connectDB= require("./src/db/db");
 
-const app = express ();
-const connectDB=require("./src/config/config.js");
-const cookieParser = require("cookie-parser");
+const app = express();
 connectDB()
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+  })
+);
 app.use(express.json());
-app.use(cookieParser());
 
-app.get("/api/health", (req, res) => {
-  res.json({
-    status: "ok",
-    message: "CareerOS backend is connected"
-  });
+app.listen(5000, () => {
+  console.log("Server running on port 5000");
 });
-
-
-app.post()
-app.listen(3000,()=>{
-    console.log("Server is running at port 3000");
-});
-
