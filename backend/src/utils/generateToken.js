@@ -13,7 +13,7 @@ process.env.JWT_SECRET_KEY,
  httpOnly: true,
             secure:false,
             sameSite:"lax",
-            maxAge:7*24*60*60*60*10000
+            maxAge:24*60*60*1000
     })
 }
 module.exports= generateTokenAndsetCookie;
