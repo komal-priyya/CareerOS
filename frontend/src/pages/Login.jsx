@@ -39,14 +39,14 @@ body:JSON.stringify({
         })
  const data =  await response.json()
 
- if(response.ok){
+ if(!response.ok){
 
     alert(data.message || "user login failed");
     return
  }
 
- alert("Account created successfully")
-   navigate("/today");
+ alert("login successfully")
+  navigate("/dashboard", { replace: true });
 
 }
     catch(error){
