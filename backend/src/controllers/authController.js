@@ -176,5 +176,63 @@ const profile = async (req, res) => {
     }
 }
 
+const editProfile = async (req,res)=>{
 
-module.exports = { register, login, logout, profile }
+
+    try{
+const userID= req.user.id
+        const {name} = req.body
+
+console.log("Request body:", req.body);
+console.log("Received name:", name);
+console.log("Name type:", typeof name);
+        if(typeof name !== "string" || name.trim().length <2 ){
+            return res.status(400).json({
+                 success:false,
+                 message:"Name must contain at least 2 characters"
+            });
+        }
+
+        const updatedUser = await User.findByIdAndUpdate(
+            userID,
+            {$set:{name:name.trim()
+
+            }},
+            {
+                new:true,
+                runValidators:true,
+            }
+
+        ).select("-password")
+        
+if(!updatedUser){
+    return res.status(200).json({
+        success:false,
+        message:"user not found"
+    })
+}
+
+return res.status(200).json({
+    success:true,
+    message:"Profile updated successfully",
+    data:{
+        id:updatedUser._id,
+        name:updatedUser.name,
+        email:updatedUser.email
+
+    }
+})
+
+    }catch(error){
+console.error(error)
+return res.status(500).json({
+    success:false,
+    message:"something went wrong while updating profile"
+})
+    }
+
+
+}
+
+
+module.exports = { register, login, logout, profile ,editProfile}
