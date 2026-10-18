@@ -42,7 +42,7 @@ if(loading)
 
     <div>
         <p>
-            checking Authentication...
+           
         </p>
     </div>
   )
