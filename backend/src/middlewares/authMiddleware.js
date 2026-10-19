@@ -28,7 +28,7 @@ next()}
 catch(error){
     console.error(error)
     return res.status(401).json({
-        sucsess:false,
+        success:false,
         message:"Invalid or Expired Token"
     })
 }
