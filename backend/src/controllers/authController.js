@@ -2,7 +2,10 @@ const express = require('express')
 const User = require('../models/UserModel')
 const bcrypt = require('bcrypt')
 const generateToken = require('../utils/generateToken')
+const authMiddleware = require("../middlewares/authMiddleware.js");
+const fs= require("fs/promises");
 
+const upload = require("../middlewares/uploadMiddleware");
 // validate password
 const validatePassword = (password) => {
     if (typeof password !== "string") {
@@ -234,5 +237,63 @@ return res.status(500).json({
 
 }
 
+const uploadProfilePhoto = async (req,res)=>{
 
-module.exports = { register, login, logout, profile ,editProfile}
+   
+    try{
+         const userId = req.user.id
+        if(!req.file){
+return res.status(400).json({
+    success:false,
+    message:"Please upload a profile photo"
+});
+        }
+const profilePicture= `/uploads/profiles/${req.file.filename}`;
+const updatedUser= await User.findByIdAndUpdate(
+    userId,{
+        $set:{profilePicture
+
+        }
+    },
+    {
+        new:true,
+        runValidators:true
+    }
+
+).select("-password");
+if(updatedUser){
+    await fs.unlink(req.file.path).catch(()=>{})
+
+    return res.status(404).json({
+    success:false,
+    message:"User not found"
+    })
+}
+return res.status(200).json({
+    success:tue,
+    message:"Profile photo uploaded successfully",
+    data:{
+        id:updatedUser._id,
+        name:updatedUser.name,
+        email:updatedUser.email,
+        profilePicture:
+        updatedUser.profilePicture
+    }
+})
+
+        
+    }catch(error){
+         console.error("Profile photo upload error :" ,error)
+          if(req.file){
+    await fs.unlink(req.file.path).catch(()=>{})
+        }
+         return res.status(500).json({
+              success:false,
+         message:"Failed to update profile photo"  
+         })
+        
+        
+}
+
+}
+module.exports = { register, login, logout, profile ,editProfile,uploadProfilePhoto}
