@@ -1,13 +1,19 @@
 import React, { useState } from 'react'
+import { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
 const Login =  () => {
     const navigate= useNavigate()
 
-const [FormData,setFormData]= useState({
-    email:"",
-    password:""
-})
+const [FormData, setFormData] = useState(() => ({
+  email: localStorage.getItem("loginEmail") || "",
+  password: ""
+}));
+useEffect(() => {
+  localStorage.setItem("loginEmail", FormData.email);
+}, [FormData.email]);
+
+
     const [loading,setLoading]=useState()
     const [error,setError]=useState('')
 
@@ -70,13 +76,17 @@ setLoading(false)
           <div>
 
             <label htmlFor="email">email</label>
-            <input type="email" name='email' id ='email' placeholder='Enter your email' onChange={handleChange} />
+            <input type="email" name='email' id ='email'
+            value={FormData.email}
+            placeholder='Enter your email' onChange={handleChange} />
 
           </div>
           <div>
             
             <label htmlFor="password">password</label>
-            <input type="password" name='password' id ='password' placeholder='Enter your password' onChange={handleChange} />
+            <input type="password" name='password' id ='password'
+              value={FormData.password}
+            placeholder='Enter your password' onChange={handleChange} />
 
           </div>
 
