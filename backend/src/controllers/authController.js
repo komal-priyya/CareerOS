@@ -155,17 +155,28 @@ const logout = async (req, res) => {
 
     });
 };
+// getprofile
 const profile = async (req, res) => {
     try {
-        const user = req.user
 
+            const userId = req.user.id;
+
+    const user = await User.findById(userId).select("-password");
+console.log("MongoDB profile picture:", user.profilePicture);
+if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
 
         return res.status(200).json({
             success: true,
             data: {
                 id: user._id,
                 name: user.name,
-                email: user.email
+                email: user.email,
+                  profilePicture: user.profilePicture
             }
 
 
@@ -248,7 +259,9 @@ return res.status(400).json({
     message:"Please upload a profile photo"
 });
         }
-const profilePicture= `/uploads/profiles/${req.file.filename}`;
+console.log("Multer filename:", req.file?.filename);
+console.log("Path being saved:", profilePicture);
+const profilePicture= `/uploads/${req.file.filename}`;
 const updatedUser= await User.findByIdAndUpdate(
     userId,{
         $set:{profilePicture
@@ -261,7 +274,9 @@ const updatedUser= await User.findByIdAndUpdate(
     }
 
 ).select("-password");
-if(updatedUser){
+
+console.log("MongoDB saved path:", updatedUser?.profilePicture);
+if(!updatedUser){
     await fs.unlink(req.file.path).catch(()=>{})
 
     return res.status(404).json({
@@ -270,7 +285,7 @@ if(updatedUser){
     })
 }
 return res.status(200).json({
-    success:tue,
+    success:true,
     message:"Profile photo uploaded successfully",
     data:{
         id:updatedUser._id,
