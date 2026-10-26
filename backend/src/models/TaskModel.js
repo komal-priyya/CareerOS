@@ -24,7 +24,8 @@ enum:["low","medium","high"],
 default:"medium"
     },
     dueDate:{
-        
+         type: Date,
+      default: null  
     },
 
     user:{
@@ -32,8 +33,24 @@ default:"medium"
     ref:"User",
         required:true
 
-    }
+    },
+    userName: {
+  type: String,
+  required: true
 },
+reqId: {
+    type: String,
+    required: true,
+    trim: true
+}
+},
+
     {timestamps:true,}
 );
+taskSchema.index(
+    { user: 1, reqId: 1 },
+    { unique: true }
+);
+
 module.exports= mongoose.model("Task", taskSchema)
+
