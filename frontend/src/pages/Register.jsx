@@ -1,19 +1,43 @@
 import  react, { useState } from 'react';
+import { useEffect } from 'react';
 import {Link, useNavigate} from 'react-router-dom'
  
 const Register= () =>{
     const navigate = useNavigate();
-const [FormData, setFormData]= useState({
-    name:"",
-    email:"",
-    password:""
-})
+const [FormData, setFormData] = useState(() => {
+  const saved = localStorage.getItem("careerOS-register-draft");
 
-const [error,setError]=useState()
+  let draft = {};
+
+  try {
+    draft = saved ? JSON.parse(saved) : {};
+  } catch {
+    draft = {};
+  }
+
+  return {
+    name: draft.name || "",
+    email: draft.email || "",
+    password: "",
+    
+  };
+});
+
+useEffect(() => {
+  localStorage.setItem(
+    "careerOS-register-draft",
+    JSON.stringify({
+      name: FormData.name,
+      email: FormData.email
+    })
+  );
+}, [FormData.name, FormData.email]);
+
+const [error,setError]=useState('')
 const [loading,setLoading]=useState(false);
 
  const passwordRules = {
-    hasEightCharacters: FormData.password.length >= 8,
+  hasEightCharacters: (FormData.password ?? "").length >= 8,
     hasUppercase: /[A-Z]/.test(FormData.password),
     hasLowercase: /[a-z]/.test(FormData.password),
     hasNumber: /[0-9]/.test(FormData.password),
@@ -97,8 +121,10 @@ return(
     name="name" value={FormData.name}
      onChange={handleChange} 
       placeholder="Enter your name"
-       type="text" />
-required
+       type="text"
+      required 
+       />
+
 </div>
 
 <div>
