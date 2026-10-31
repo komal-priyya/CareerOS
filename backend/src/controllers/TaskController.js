@@ -7,7 +7,7 @@ const Task = require('../models/TaskModel')
 
 const normalizeTask = (data) => ({
     title: data.title.trim(),
-    description: data.description ?? " ",
+    description: data.description ?? "",
     status: data.status ?? "pending",
     priority: data.priority ?? "medium",
     dueDate: data.dueDate
@@ -16,9 +16,11 @@ const normalizeTask = (data) => ({
 });
 // create Task
 const createTask = async (req, res) => {
+  console.log("CREATE TASK REQUEST RECEIVED");
 
     try {
 
+      console.log("1. Controller reached");
         const { title, description, status, priority, dueDate, reqId } = req.body;
 
         // rejects non-string titles and  rejects empty titles and titles containing only spaces
@@ -27,7 +29,16 @@ const createTask = async (req, res) => {
                 success: false,
                 message: "Task title is required"
             });
-        }
+
+            //    if (typeof description !== "string" || !description.trim()) {
+            // return res.status(400).json({
+            //     success: false,
+            //     message: "Task title is required"
+            // });
+
+
+            
+          }
         if (typeof reqId !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(reqId)
         ) {
             return res.status(400).json({
@@ -37,9 +48,11 @@ const createTask = async (req, res) => {
 
 
         }
+
+console.log("2. Before MongoDB save");
         const todo = await Task.create({
-            title,
-            description,
+            title: title.trim(),
+            description: description ?? "",
             status,
             priority,
             dueDate,
@@ -48,7 +61,7 @@ const createTask = async (req, res) => {
             userName: req.user.name
 
         })
-
+console.log("3. After MongoDB save");
         return res.status(201).json({
             success: true,
             message: "Task created successfully",
@@ -56,6 +69,8 @@ const createTask = async (req, res) => {
         })
     }
     catch (error) {
+ console.error("CREATE TASK ERROR:", error);
+
         // MongoDB uses error code 11000 when an 
         // insertion violates a unique index.
         if (error.code === 11000) {
@@ -85,7 +100,8 @@ const createTask = async (req, res) => {
 
             return res.status(500).json({
                 success: false,
-                message: "Something went wrong"
+        message: "Failed to create task"
+
             });
         }
     }
