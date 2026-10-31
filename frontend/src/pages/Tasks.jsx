@@ -1,8 +1,4 @@
 
-
-
-
-
 import React from "react";
 import { useEffect, useState, useRef } from "react";
 
@@ -18,6 +14,7 @@ const Tasks = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [showCreateForm, setShowCreateForm] = useState(false);
 
   // THREE-DOT MENU
   const [openMenuId, setOpenMenuId] = useState(null);
@@ -41,6 +38,8 @@ const Tasks = () => {
   const [tasks, setTasks] = useState([]);
   const [tasksLoading, setTasksLoading] = useState(false);
   const [tasksError, setTasksError] = useState("");
+  // FILTER STATE
+const [activeFilter, setActiveFilter] = useState("all");
 
   // CREATE TASK FORM STATE
   const [FormData, setFormData] = useState(() => {
@@ -60,6 +59,26 @@ const Tasks = () => {
       dueDate: saved.dueDate ?? "",
     };
   });
+
+  // overdue date
+  const isOverdue = (task) => {
+  if (!task.dueDate) return false;
+
+  if (
+    task.status === "completed" ||
+    task.status === "cancelled"
+  ) {
+    return false;
+  }
+
+  const dueDate = new Date(task.dueDate);
+  const today = new Date();
+
+  dueDate.setHours(0, 0, 0, 0);
+  today.setHours(0, 0, 0, 0);
+
+  return dueDate < today;
+};
 
   // SAVE FORM DRAFT
   useEffect(() => {
@@ -150,6 +169,7 @@ const Tasks = () => {
 
       requestIdRef.current = null;
       setFormData({ ...defaultForm });
+      setShowCreateForm(false);
     } catch (err) {
       console.error("Create task error:", err);
       setError("Network error. You can retry the same task.");
@@ -195,7 +215,7 @@ const Tasks = () => {
               new Date(a.createdAt || 0)
           )
         );
-      } catch (err) {
+      } catch (error) {
         console.error("Fetch tasks error:", err);
         setTasksError("Unable to load tasks");
       } finally {
@@ -205,6 +225,7 @@ const Tasks = () => {
 
     fetchTasks();
   }, []);
+  
 
   // OPEN EDIT FORM
   const handleEditClick = (task) => {
@@ -238,6 +259,11 @@ const Tasks = () => {
   // UPDATE TASK
   const handleEditSubmit = async (e) => {
     e.preventDefault();
+
+  //     console.log("SUBMIT CLICKED");
+  // console.log("Title:", FormData.title);
+  // console.log("Loading:", loading);
+  // console.log("Submitting lock:", submittingRef.current);
 
     if (!editingTaskId || editingRef.current) return;
 
@@ -340,128 +366,216 @@ const Tasks = () => {
     }
   };
 
+
+
+
+  const handleToggleComplete =async (task) => {
+    const newStatus =
+      task.status === "completed" ? "pending" : "completed";
+
+    console.log("Task ID:", task._id);
+    console.log("New status:", newStatus);
+
+
+    try{
+const response = await fetch(`http://localhost:5000/api/tasks/${task._id}`,{
+
+ method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          status: newStatus,
+        }),
+
+      })
+
+        const data = await response.json();
+
+    if (!response.ok || !data.data?._id) {
+      throw new Error(data.message || "Failed to update task");
+    }
+
+ setTasks((prevTasks) =>
+      prevTasks.map((currentTask) =>
+        currentTask._id === task._id
+          ? data.data
+          : currentTask
+      )
+    );
+    }
+    catch(error){
+       console.error("Checkbox error:", error);
+    setTasksError(error.message);
+  };
+}
+const filteredTasks =
+  activeFilter === "all"
+    ? tasks
+    : activeFilter === "overdue"
+    ? tasks.filter(isOverdue)
+    : tasks.filter((task) => task.status === activeFilter);
+
+    const taskCounts = {
+  all: tasks.length,
+  pending: tasks.filter((task) => task.status === "pending").length,
+  "in-progress": tasks.filter(
+    (task) => task.status === "in-progress"
+  ).length,
+  completed: tasks.filter((task) => task.status === "completed").length,
+  cancelled: tasks.filter((task) => task.status === "cancelled").length,
+  overdue: tasks.filter(isOverdue).length,
+};
   return (
     <div className="p-5">
-      <h2 className="mb-4 text-xl font-semibold">Create Task</h2>
+   
 
-      {/* CREATE TASK FORM */}
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label htmlFor="title">Title</label>
 
-          <div className="relative w-full max-w-md">
-            <input
-              id="title"
-              name="title"
-              placeholder="Enter Task title"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 pr-10"
-              value={FormData.title}
-              onChange={handleChange}
-              required
-            />
 
-            {FormData.title && (
-              <button
-                type="button"
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-lg text-gray-600 hover:text-red-500"
-                onClick={() => handleClear("title")}
-                aria-label="Clear title"
-              >
-                ×
-              </button>
-            )}
-          </div>
 
-          <div className="mt-3">
-            <label htmlFor="description">Description</label>
-
-            <div className="relative w-full max-w-md">
-              <input
-                id="description"
-                name="description"
-                placeholder="Enter task description"
-                type="text"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 pr-10"
-                value={FormData.description}
-                onChange={handleChange}
-              />
-
-              {FormData.description && (
-                <button
-                  type="button"
-                  onClick={() => handleClear("description")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xl text-gray-600"
-                  aria-label="Clear description"
-                >
-                  ×
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-3">
-          <label htmlFor="status">Status</label>
-
-          <select
-            id="status"
-            name="status"
-            value={FormData.status}
-            onChange={handleChange}
-            className="ml-2 rounded border p-2"
-          >
-            <option value="pending">Pending</option>
-            <option value="completed">Completed</option>
-            <option value="in-progress">In-Progress</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
-        </div>
-
-        <div className="mt-3">
-          <label htmlFor="priority">Priority</label>
-
-          <select
-            id="priority"
-            name="priority"
-            value={FormData.priority}
-            onChange={handleChange}
-            className="ml-2 rounded border p-2"
-          >
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-          </select>
-        </div>
-
-        <div className="mt-3">
-          <label htmlFor="dueDate" className="block mb-1">
-            Due Date
-          </label>
-
-          <input
-            type="date"
-            id="dueDate"
-            name="dueDate"
-            value={FormData.dueDate}
-            onChange={handleChange}
-            className="w-full max-w-md rounded-lg border border-gray-300 px-3 py-2"
-          />
-        </div>
-
-        {error && (
-          <p role="alert" className="mt-2 text-red-500">
-            {error}
-          </p>
-        )}
+      <div className="mb-5 flex items-center justify-between">
+        <h2 className="text-2xl font-semibold text-gray-800">
+          My Tasks
+        </h2>
 
         <button
-          type="submit"
+          type="button"
+          onClick={() => setShowCreateForm((prev) => !prev)}
           disabled={loading}
-          className="mt-4 rounded bg-blue-600 px-4 py-2 text-white disabled:opacity-50"
+          className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
         >
-          {loading ? "Creating..." : "Add Task"}
+          {showCreateForm ? "Cancel" : "+ Create Task"}
         </button>
-      </form>
+      </div>
+
+
+      {showCreateForm && (
+        <div className="mb-6 rounded-xl border border-gray-200 bg-white p-5">
+          <h3 className="mb-4 text-lg font-semibold">
+            Create New Task
+          </h3>
+
+          {/* CREATE TASK FORM */}
+          <form onSubmit={handleSubmit} noValidate  >  
+            <div>
+              <label htmlFor="title">Title</label>
+
+              <div className="relative w-full max-w-md">
+                <input
+                  id="title"
+                  name="title"
+                  placeholder="Enter Task title"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 pr-10"
+                  value={FormData.title}
+                  onChange={handleChange}
+                  required
+                />
+
+                {FormData.title && (
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-lg text-gray-600 hover:text-red-500"
+                    onClick={() => handleClear("title")}
+                    aria-label="Clear title"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+
+              <div className="mt-3">
+                <label htmlFor="description">Description</label>
+
+                <div className="relative w-full max-w-md">
+                  <input
+                    id="description"
+                    name="description"
+                    placeholder="Enter task description"
+                    type="text"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 pr-10"
+                    value={FormData.description}
+                    onChange={handleChange}
+                  />
+
+                  {FormData.description && (
+                    <button
+                      type="button"
+                      onClick={() => handleClear("description")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-xl text-gray-600"
+                      aria-label="Clear description"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-3">
+              <label htmlFor="status">Status</label>
+
+              <select
+                id="status"
+                name="status"
+                value={FormData.status}
+                onChange={handleChange}
+                className="ml-2 rounded border p-2"
+              >
+                <option value="pending">Pending</option>
+                <option value="completed">Completed</option>
+                <option value="in-progress">In-Progress</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+
+            <div className="mt-3">
+              <label htmlFor="priority">Priority</label>
+
+              <select
+                id="priority"
+                name="priority"
+                value={FormData.priority}
+                onChange={handleChange}
+                className="ml-2 rounded border p-2"
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+
+            <div className="mt-3">
+              <label htmlFor="dueDate" className="block mb-1">
+                Due Date
+              </label>
+
+              <input
+                type="date"
+                id="dueDate"
+                name="dueDate"
+                value={FormData.dueDate}
+                onChange={handleChange}
+                className="w-full max-w-md rounded-lg border border-gray-300 px-3 py-2"
+              />
+            </div>
+
+            {error && (
+              <p role="alert" className="mt-2 text-red-500">
+                {error}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="mt-4 rounded bg-blue-600 px-4 py-2 text-white disabled:opacity-50"
+            >
+              {loading ? "Creating..." : "Add Task"}
+            </button>
+          </form>
+        </div>
+      )}
 
       {/* TASK LIST */}
       <section className="mt-8">
@@ -485,72 +599,235 @@ const Tasks = () => {
           <p>No tasks yet. Create your first task.</p>
         )}
 
-        {!tasksLoading &&
-          tasks.map((task) => (
-            <div
-              key={task._id}
-              className="relative mb-4 rounded-lg border border-gray-300 p-4"
+
+
+{/* TASK FILTERS */}
+<div className="mb-5 flex flex-wrap gap-3">
+
+  <button
+    type="button"
+    onClick={() => setActiveFilter("all")}
+    className={`rounded-lg px-4 py-2 text-sm font-medium ${
+      activeFilter === "all"
+        ? "bg-blue-600 text-white"
+        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+    }`}
+  >
+    All ({taskCounts.all})
+  </button>
+
+  <button
+    type="button"
+    onClick={() => setActiveFilter("pending")}
+    className={`rounded-lg px-4 py-2 text-sm font-medium ${
+      activeFilter === "pending"
+        ? "bg-blue-600 text-white"
+        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+    }`}
+  >
+Pending ({taskCounts.pending})
+  </button>
+
+  <button
+    type="button"
+    onClick={() => setActiveFilter("in-progress")}
+    className={`rounded-lg px-4 py-2 text-sm font-medium ${
+      activeFilter === "in-progress"
+        ? "bg-blue-600 text-white"
+        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+    }`}
+  >
+    In Progress ({taskCounts["in-progress"]})
+  </button>
+
+  <button
+    type="button"
+    onClick={() => setActiveFilter("completed")}
+    className={`rounded-lg px-4 py-2 text-sm font-medium ${
+      activeFilter === "completed"
+        ? "bg-blue-600 text-white"
+        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+    }`}
+  >
+
+    Completed ({taskCounts.completed})
+  </button>
+
+  <button
+    type="button"
+    onClick={() => setActiveFilter("cancelled")}
+    className={`rounded-lg px-4 py-2 text-sm font-medium ${
+      activeFilter === "cancelled"
+        ? "bg-blue-600 text-white"
+        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+    }`}
+  >
+    Cancelled ({taskCounts.cancelled})
+  </button>
+
+
+
+
+  <button  type="button" onClick={()=>setActiveFilter("overdue")}  className={`rounded-lg px-4 py-2 text-sm font-medium ${
+    activeFilter=="overdue"
+    ?"bg-red-600 text-white"
+    :"bg-red-50 text-red-700 hover:bg-red-100"
+  }`}>
+ Overdue ({taskCounts.overdue})
+
+  </button>
+
+</div>
+
+        {/* TABLE HEADINGS */}
+        <div className="grid grid-cols-[3fr_1fr_1fr_1fr_70px] gap-4 border-b bg-gray-100 px-4 py-3 font-semibold">
+
+
+          <span>Task</span>
+          <span>Priority</span>
+          <span>Status</span>
+          <span>Due Date</span>
+          <span>Actions</span>
+        </div>
+
+{!tasksLoading &&
+  tasks.length > 0 &&
+  filteredTasks.length === 0 && (
+    <p className="py-8 text-center text-gray-500">
+      No tasks found.
+    </p>
+  )}
+
+
+{!tasksLoading &&
+   filteredTasks.map((task) => (
+    <div
+      key={task._id}
+      className="grid grid-cols-[3fr_1fr_1fr_1fr_70px] items-center gap-4 border-b border-gray-700 px-4 py-4"
+    >
+
+      {/* COLUMN 1: TASK */}
+      <div className="flex min-w-0 items-center gap-3">
+
+        <input
+          type="checkbox"
+          checked={task.status === "completed"}
+          onChange={() => handleToggleComplete(task)}
+          className="h-4 w-4 shrink-0 cursor-pointer"
+        />
+
+        <div className="min-w-0">
+
+          <h3
+            className={`break-words font-medium ${
+              task.status === "completed"
+                ? "line-through text-gray-400"
+                : "text-gray-700"
+            }`}
+          >
+            {task.title}
+          </h3>
+
+          {task.description && (
+            <p 
+            
+             className={`break-words font-medium ${
+              task.status === "completed"
+                ? "line-through text-gray-400"
+                : "text-gray-700"
+            }`}
+          >
+              {task.description}
+            </p>
+          )}
+
+        </div>
+      </div>
+
+      {/* COLUMN 2: PRIORITY */}
+      <div>
+        <span
+          className={`rounded-full px-3 py-1 text-sm capitalize ${
+            task.priority === "high"
+              ? "bg-red-700/40 text-red-700"
+              : task.priority === "medium"
+              ? "bg-yellow-700/40 text-yellow-700"
+              : "bg-green-700/40 text-green-700"
+          }`}
+        >
+          {task.priority}
+        </span>
+      </div>
+
+      {/* COLUMN 3: STATUS */}
+      <div>
+        <span   className={`rounded-full px-3 py-1 text-sm capitalize ${
+            task.status === "in-progress"
+              ? "bg-blue-600/40 text-blue-700"
+              : task.status === "pending"
+              ? "bg-yellow-700/40 text-yellow-700"
+             : task.status === "completed"
+              ? "bg-green-700/40 text-green-700"
+              :"bg-gray-700/40   text-gray-700" 
+
+          }`}
+        >{task.status}
+        </span>
+      </div>
+
+      {/* COLUMN 4: DUE DATE */}
+      <div className="text-sm text-gray-800">
+        {task.dueDate
+          ? new Date(task.dueDate).toLocaleDateString()
+          : "Not set"}
+      </div>
+
+      {/* COLUMN 5: ACTIONS */}
+      <div className="relative">
+
+        <button
+          type="button"
+          aria-label={`Options for ${task.title}`}
+          aria-expanded={openMenuId === task._id}
+          onClick={() =>
+            setOpenMenuId((prev) =>
+              prev === task._id ? null : task._id
+            )
+          }
+          className="rounded px-3 py-1 text-2xl hover:bg-gray-700"
+        >
+          ⋮
+        </button>
+
+        {openMenuId === task._id && (
+          <div className="absolute right-0 top-full z-20 mt-1 w-32 rounded-lg border border-gray-900 bg-gray-800 p-1 shadow-lg">
+
+            <button
+              type="button"
+              onClick={() => handleEditClick(task)}
+              className="block w-full rounded px-3 py-2 text-left text-sm text-white hover:bg-gray-700"
             >
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h3 className="font-semibold">
-                    Title: {task.title}
-                  </h3>
+              Edit
+            </button>
 
-                  <p>Description: {task.description}</p>
-                  <p>Status: {task.status}</p>
-                  <p>Priority: {task.priority}</p>
+            <button
+              type="button"
+              onClick={() => {
+                setDeleteTaskId(task._id);
+                setOpenMenuId(null);
+              }}
+              className="block w-full rounded px-3 py-2 text-left text-sm text-red-400 hover:bg-gray-700"
+            >
+              Delete
+            </button>
 
-                  <p>
-                    Due Date:{" "}
-                    {task.dueDate
-                      ? new Date(task.dueDate).toLocaleDateString()
-                      : "Not set"}
-                  </p>
-                </div>
+          </div>
+        )}
 
-                {/* THREE-DOT MENU */}
-                <div className="relative">
-                  <button
-                    type="button"
-                    aria-label={`Options for ${task.title}`}
-                    aria-expanded={openMenuId === task._id}
-                    onClick={() =>
-                      setOpenMenuId((prev) =>
-                        prev === task._id ? null : task._id
-                      )
-                    }
-                    className="rounded px-3 py-1 text-2xl hover:bg-gray-100"
-                  >
-                    ⋮
-                  </button>
+      </div>
 
-                  {openMenuId === task._id && (
-                    <div className="absolute right-0 top-full z-10 mt-1 w-32 rounded-lg border bg-white p-1 shadow-lg">
-                      <button
-                        type="button"
-                        onClick={() => handleEditClick(task)}
-                        className="block w-full rounded px-3 py-2 text-left text-gray-800 hover:bg-gray-100"
-                      >
-                        Edit
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setDeleteTaskId(task._id);
-                          setOpenMenuId(null);
-                        }}
-                        className="block w-full rounded px-3 py-2 text-left text-red-600 hover:bg-red-50"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
+    </div>
+  ))}
       </section>
 
       {/* EDIT TASK MODAL */}
@@ -696,7 +973,9 @@ const Tasks = () => {
             </form>
           </div>
         </div>
+
       )}
+
 
       {/* DELETE CONFIRMATION MODAL */}
       {deleteTaskId && (
@@ -743,10 +1022,12 @@ const Tasks = () => {
               </button>
             </div>
           </div>
+
         </div>
       )}
     </div>
-  );
+
+  )
 };
 
 export default Tasks;
