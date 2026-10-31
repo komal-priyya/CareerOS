@@ -22,6 +22,8 @@ try{
 
     }
 
+     localStorage.removeItem("taskDraft");
+     localStorage.removeItem("loginEmail");
 navigate("/login" ,{replace:true})
 }
 catch(error){
