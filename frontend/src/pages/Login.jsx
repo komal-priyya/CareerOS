@@ -6,12 +6,12 @@ const Login =  () => {
     const navigate= useNavigate()
 
 const [FormData, setFormData] = useState(() => ({
-  email: localStorage.getItem("loginEmail") || "",
+  email:"",
   password: ""
 }));
-useEffect(() => {
-  localStorage.setItem("loginEmail", FormData.email);
-}, [FormData.email]);
+// useEffect(() => {
+//   localStorage.setItem("loginEmail", FormData.email);
+// }, [FormData.email]);
 
 
     const [loading,setLoading]=useState()
@@ -62,6 +62,10 @@ setError("Something went wrong Please try again")
 setLoading(false)
     }
 }
+
+
+
+ 
   return (
     <div>
         
