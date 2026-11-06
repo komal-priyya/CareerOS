@@ -45,13 +45,13 @@ const App = () => {
       </GuestRoute>
      
       }/>
-{/* 
-    <Route path='/applications' element=
+ 
+    <Route path='/opportunities' element=
     {
      <ProtectedRoute>
-      < Applications/>
+      < Opportunities/>
      </ProtectedRoute>
-    }/> */}
+    }/> 
 
     
       <Route element={<MainLayout />}>
