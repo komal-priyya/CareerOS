@@ -1,12 +1,15 @@
 require("dotenv").config();
 const TaskRoutes= require('./src/routes/TaskRoutes.js')
 const express = require("express");
+const  opportunityRoutes =require ("./src/routes/opportunityRoutes.js");
 const cors = require("cors");
 const connectDB= require("./src/db/db");
 const authRoutes= require("./src/routes/authRoutes.js");
 const cookieParser = require("cookie-parser");
+
 const path = require("path");
 const app = express();
+
 connectDB()
 app.use(
   cors({
@@ -28,6 +31,8 @@ app.use(
 app.use('/api/auth',authRoutes);
 
 app.use('/api/tasks',TaskRoutes)
+app.use("/api/opportunities", opportunityRoutes);
+
 app.listen(5000, () => {
   console.log("Server running on port 5000")
 })
